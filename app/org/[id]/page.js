@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 import CommentSection from '@/components/comment-section';
+import PostActions from '@/components/post-actions';
 import { initialOf, timeAgo } from '@/lib/format';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
 import { createClient, getProfile } from '@/lib/supabase/server';
@@ -97,9 +98,14 @@ export default async function OrgPage({ params }) {
           </div>
 
           {isMember && (
-            <Link href={`/org/${org.id}/new-post`} className="btn btn-primary btn-sm">
-              发动态
-            </Link>
+            <div className="row" style={{ gap: 8 }}>
+              <Link href={`/org/${org.id}/settings`} className="btn btn-ghost btn-sm">
+                设置
+              </Link>
+              <Link href={`/org/${org.id}/new-post`} className="btn btn-primary btn-sm">
+                发动态
+              </Link>
+            </div>
           )}
         </div>
 
@@ -193,9 +199,13 @@ export default async function OrgPage({ params }) {
                   </div>
                 )}
 
-                <p className="tiny muted" style={{ marginTop: 10 }}>
-                  由 {post.profiles?.display_name || '管理员'} 发布
-                </p>
+                <div className="between" style={{ marginTop: 10, gap: 10 }}>
+                  <span className="tiny muted">
+                    由 {post.profiles?.display_name || '管理员'} 发布
+                  </span>
+
+                  {isMember && <PostActions postId={post.id} />}
+                </div>
               </article>
             ))}
           </div>

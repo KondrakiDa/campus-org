@@ -31,7 +31,9 @@ export default function LoginPage() {
         return;
       }
 
-      router.push('/');
+      // 支持 ?next=/join?code=xxx 这种「登录后回到原页面」
+      const next = new URLSearchParams(window.location.search).get('next');
+      router.push(next && next.startsWith('/') ? next : '/');
       router.refresh();
     } catch (err) {
       setError(err.message || '登录失败');
