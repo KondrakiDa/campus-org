@@ -14,12 +14,21 @@ const TYPE_LABEL = {
   org: '组织',
 };
 
-export default function ReportQueue({ items }) {
+export default function ReportQueue({ items, onChanged }) {
   const router = useRouter();
 
   const [list, setList] = useState(items || []);
   const [error, setError] = useState('');
   const [busyId, setBusyId] = useState(null);
+
+  function afterChange() {
+    // 静态站点没有服务端可刷新，优先用父组件传进来的重新加载
+    if (typeof onChanged === 'function') {
+      onChanged();
+    } else {
+      router.refresh();
+    }
+  }
 
   async function handleResolve(report, action, deleteTarget) {
     const confirmText = deleteTarget
@@ -46,7 +55,7 @@ export default function ReportQueue({ items }) {
       }
 
       setList((prev) => prev.filter((r) => r.id !== report.id));
-      router.refresh();
+      afterChange();
     } catch (err) {
       setError(err.message || '处理失败');
     } finally {
@@ -78,18 +87,14 @@ export default function ReportQueue({ items }) {
       }
 
       window.alert(`已封禁「${authorName}」`);
-      router.refresh();
+      afterChange();
     } catch (err) {
       setError(err.message || '封禁失败');
     }
   }
 
   if (list.length === 0) {
-    return (
-      <div className="empty-state">
-        队列是空的，暂时没有需要处理的内容。
-      </div>
-    );
+    return <div className="empty-state">队列是空的，暂时没有需要处理的内容。</div>;
   }
 
   return (
@@ -104,17 +109,11 @@ export default function ReportQueue({ items }) {
                 <span className="badge badge-warn">
                   {TYPE_LABEL[report.target_type] || report.target_type}
                 </span>
-                <span className="tiny muted">
-                  {timeAgo(report.created_at)}
-                </span>
+                <span className="tiny muted">{timeAgo(report.created_at)}</span>
               </div>
 
               {report.link && (
-                <Link
-                  href={report.link}
-                  className="tiny"
-                  style={{ color: 'var(--brand)' }}
-                >
+                <Link href={report.link} className="tiny" style={{ color: 'var(--brand)' }}>
                   查看原文 →
                 </Link>
               )}
@@ -122,11 +121,7 @@ export default function ReportQueue({ items }) {
 
             <p
               className="small"
-              style={{
-                whiteSpace: 'pre-wrap',
-                overflowWrap: 'anywhere',
-                marginBottom: 10,
-              }}
+              style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', marginBottom: 10 }}
             >
               {report.excerpt}
             </p>
@@ -167,9 +162,7 @@ export default function ReportQueue({ items }) {
                 <button
                   type="button"
                   className="btn btn-ghost btn-sm"
-                  onClick={() =>
-                    handleBan(report.authorId, report.authorName)
-                  }
+                  onClick={() => handleBan(report.authorId, report.authorName)}
                 >
                   封禁作者
                 </button>

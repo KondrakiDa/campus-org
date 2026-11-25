@@ -11,7 +11,7 @@ import { createClient } from '@/lib/supabase/client';
  * 只有组织管理员看得到——但即使有人伪造前端，
  * 数据库的 RLS 也会拒绝非成员的删除请求。
  */
-export default function PostActions({ postId }) {
+export default function PostActions({ postId, onDeleted }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -29,7 +29,12 @@ export default function PostActions({ postId }) {
         return;
       }
 
-      router.refresh();
+      // 静态站点没有服务端可刷新，靠父组件重新拉一次数据
+      if (typeof onDeleted === 'function') {
+        onDeleted();
+      } else {
+        router.refresh();
+      }
     } catch (err) {
       window.alert(err.message || '删除失败');
     } finally {

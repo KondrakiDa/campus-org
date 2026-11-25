@@ -29,3 +29,14 @@ yarn-error.log*
 
 # 本地缓存
 .npm-cache/
+
+# 安卓构建产物（源码要提交，产物不要）
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+*.apk
+*.aab
+*.keystore
+*.jks

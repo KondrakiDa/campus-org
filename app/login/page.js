@@ -4,11 +4,13 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
+import { useAuth } from '@/components/auth-provider';
 import { translateError } from '@/lib/errors';
 import { createClient } from '@/lib/supabase/client';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { refresh } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -30,6 +32,9 @@ export default function LoginPage() {
         setError(translateError(signInError));
         return;
       }
+
+      // 静态站点没有服务端可刷新，靠这个把全局登录状态同步过来
+      await refresh();
 
       // 支持 ?next=/join?code=xxx 这种「登录后回到原页面」
       const next = new URLSearchParams(window.location.search).get('next');

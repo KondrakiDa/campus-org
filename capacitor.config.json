@@ -1,0 +1,11 @@
+{
+  "appId": "com.kondraki.campusorg",
+  "appName": "组织汇",
+  "webDir": "out",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false
+  }
+}

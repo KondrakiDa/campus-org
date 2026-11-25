@@ -4,11 +4,13 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
+import { useAuth } from '@/components/auth-provider';
 import { translateError } from '@/lib/errors';
 import { createClient } from '@/lib/supabase/client';
 
 export default function SignupPage() {
   const router = useRouter();
+  const { refresh } = useAuth();
 
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
@@ -50,6 +52,9 @@ export default function SignupPage() {
         setNotice('注册成功！请去邮箱点确认链接，然后再回来登录。');
         return;
       }
+
+      // 静态站点没有服务端可刷新，靠这个把全局登录状态同步过来
+      await refresh();
 
       // 支持 ?next=/join?code=xxx 这种「注册后回到原页面」
       const next = new URLSearchParams(window.location.search).get('next');

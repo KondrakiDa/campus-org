@@ -1,0 +1,56 @@
+name: 构建安卓 APK
+
+# 什么时候自动构建：
+#   1. 推送到 static-export 或 main 分支，且改动涉及代码
+#   2. 在 GitHub 网页上手动点「Run workflow」
+on:
+  push:
+    branches: [static-export, main]
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 拉取代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: 安装依赖
+        run: npm ci
+
+      # 这两个变量本来就是公开信息（会出现在 APK 里），
+      # 直接写在这里比配 Secrets 省事。要换成 Secrets 就改这两行。
+      - name: 构建静态站点
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://mihnozlyzuzwlkgzhufq.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: sb_publishable_zOODZIhjr8bPWZ_58M_DkQ_hBeEjOCy
+
+      - name: 同步到安卓工程
+        run: npx cap sync android
+
+      - name: 安装 JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: 打包 APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: 上传 APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: 组织汇-debug版
+          path: android/app/build/outputs/apk/debug/*.apk
+          retention-days: 30

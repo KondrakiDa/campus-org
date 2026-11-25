@@ -1,14 +1,34 @@
-import { redirect } from 'next/navigation';
+'use client';
 
+import Link from 'next/link';
+
+import { useAuth } from '@/components/auth-provider';
 import RedeemInviteForm from '@/components/redeem-invite-form';
-import { isSupabaseConfigured } from '@/lib/supabase/config';
-import { getProfile } from '@/lib/supabase/server';
 
-export default async function InvitePage() {
-  if (!isSupabaseConfigured) redirect('/');
+export default function InvitePage() {
+  const { profile, loading } = useAuth();
 
-  const profile = await getProfile().catch(() => null);
-  if (!profile) redirect('/login');
+  if (loading) {
+    return <div className="container empty-state">正在加载…</div>;
+  }
+
+  if (!profile) {
+    return (
+      <div className="container" style={{ maxWidth: 460, paddingTop: 50 }}>
+        <div className="card">
+          <span className="badge badge-warn">需要登录</span>
+          <h1 style={{ fontSize: 20, margin: '12px 0 8px' }}>请先登录</h1>
+          <Link
+            href={`/login?next=${encodeURIComponent('/invite/')}`}
+            className="btn btn-primary btn-sm"
+            style={{ marginTop: 14 }}
+          >
+            去登录
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container" style={{ maxWidth: 460 }}>
