@@ -1,6 +1,7 @@
 import Link from 'next/link';
 
 import SetupNotice from '@/components/setup-notice';
+import Pagination from '@/components/pagination';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
 import { createClient, getProfile } from '@/lib/supabase/server';
 
@@ -19,23 +20,36 @@ export default async function HomePage({ searchParams }) {
     return <SetupNotice />;
   }
 
-  const { q } = await searchParams;
+  const { q, page: pageParam } = await searchParams;
   const keyword = sanitize(q);
 
+  const ORGS_PER_PAGE = 24;
+  const currentPage = Math.max(1, Number.parseInt(pageParam, 10) || 1);
+  const rangeFrom = (currentPage - 1) * ORGS_PER_PAGE;
+  const rangeTo = rangeFrom + ORGS_PER_PAGE - 1;
+
   const supabase = await createClient();
-  const profile = await getProfile().catch(() => null);
 
   let request = supabase
     .from('orgs')
-    .select('id, name, school, intro, logo_url, created_at, posts(count)')
+    .select('id, name, school, intro, logo_url, created_at, posts(count)', {
+      count: 'exact',
+    })
     .order('created_at', { ascending: false })
-    .limit(60);
+    .range(rangeFrom, rangeTo);
 
   if (keyword) {
     request = request.or(`name.ilike.%${keyword}%,school.ilike.%${keyword}%`);
   }
 
-  const { data: orgs, error } = await request;
+  // 查登录用户和查组织列表同时发出。
+  // 以前是先等用户（600ms）再查列表（600ms），串行要 1.2 秒。
+  const [profile, { data: orgs, count: orgTotal, error }] = await Promise.all([
+    getProfile().catch(() => null),
+    request,
+  ]);
+
+  const totalPages = Math.max(1, Math.ceil((orgTotal ?? 0) / ORGS_PER_PAGE));
 
   return (
     <div className="container">
@@ -183,6 +197,21 @@ export default async function HomePage({ searchParams }) {
             );
           })}
         </div>
+      )}
+
+      {orgs && orgs.length > 0 && (
+        <Pagination
+          page={currentPage}
+          totalPages={totalPages}
+          label="组织列表分页"
+          hrefForPage={(target) => {
+            const params = new URLSearchParams();
+            if (keyword) params.set('q', keyword);
+            if (target > 1) params.set('page', String(target));
+            const qs = params.toString();
+            return qs ? `/?${qs}` : '/';
+          }}
+        />
       )}
 
       {/* ============ 给管理员的入口 ============ */}

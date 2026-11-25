@@ -1,5 +1,6 @@
 import Link from 'next/link';
 
+import UserAvatar from '@/components/user-avatar';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
 import { getProfile } from '@/lib/supabase/server';
 
@@ -23,14 +24,40 @@ export default async function RootLayout({ children }) {
   }
 
   return (
-    <html lang="zh-CN" data-theme="dark" suppressHydrationWarning>
+    <html
+      lang="zh-CN"
+      data-theme="dark"
+      data-accent="blue"
+      suppressHydrationWarning
+    >
+      <head>
+        {/*
+          在页面渲染前就把主题色贴上，避免刷新时先闪一下默认蓝再变。
+          这段脚本必须内联在 head 里，不能放进组件——那样太晚。
+        */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{var a=localStorage.getItem('org_v1_accent');if(a)document.documentElement.setAttribute('data-accent',a);}catch(e){}",
+          }}
+        />
+      </head>
       <body>
         <header className="site-nav">
           <div className="container site-nav-inner">
-            <Link href="/" className="brand">
-              <span className="brand-mark">团</span>
-              <span className="brand-text">组织汇</span>
-            </Link>
+            <div className="brand">
+              {/* 头像 → 个人信息页；没登录时去登录页 */}
+              <Link
+                href={profile ? '/profile' : '/login'}
+                className="brand-avatar"
+                aria-label={profile ? '个人信息' : '登录'}
+              >
+                <UserAvatar name={profile?.display_name} size={32} />
+              </Link>
+              <Link href="/" className="brand-text">
+                组织汇
+              </Link>
+            </div>
 
             <nav className="nav-links">
               <Link href="/">组织</Link>
@@ -39,6 +66,7 @@ export default async function RootLayout({ children }) {
                 <>
                   <Link href="/org/new">创建组织</Link>
                   <Link href="/invites">邀请码</Link>
+                  <Link href="/admin/reports">管理</Link>
                 </>
               )}
 

@@ -51,7 +51,9 @@ export default function SignupPage() {
         return;
       }
 
-      router.push('/');
+      // 支持 ?next=/join?code=xxx 这种「注册后回到原页面」
+      const next = new URLSearchParams(window.location.search).get('next');
+      router.push(next && next.startsWith('/') ? next : '/');
       router.refresh();
     } catch (err) {
       setError(err.message || '注册失败');
@@ -98,7 +100,7 @@ export default function SignupPage() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
+            placeholder="请输入邮箱，例如 xiaoming@qq.com"
           />
         </div>
 

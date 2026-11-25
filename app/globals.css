@@ -461,3 +461,399 @@ button, input, textarea, select {
   outline: 2px solid var(--brand);
   outline-offset: 2px;
 }
+
+/* ==========================================================================
+   分页
+   ========================================================================== */
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 28px;
+}
+
+.pager-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 11px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13.5px;
+  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+}
+
+.pager-btn:hover {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+}
+
+.pager-btn.is-active {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+  font-weight: 600;
+}
+
+.pager-btn.is-active:hover {
+  background: var(--brand);
+}
+
+.pager-btn.is-disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+.pager-btn.is-disabled:hover {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+.pager-gap {
+  color: var(--muted);
+  padding: 0 2px;
+  user-select: none;
+}
+
+@media (max-width: 640px) {
+  .pager-btn {
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    font-size: 12.5px;
+  }
+}
+
+/* ==========================================================================
+   主题色 —— 改 <html data-accent> 就能全局换主色
+   深色/浅色模式下黑白两色要分别处理，否则按钮会「白底白字」看不见
+   ========================================================================== */
+
+html[data-accent='blue'] {
+  --brand: #3b82f6;
+  --brand-2: #6366f1;
+  --brand-soft: rgba(59, 130, 246, 0.14);
+}
+
+html[data-accent='red'] {
+  --brand: #ef4444;
+  --brand-2: #dc2626;
+  --brand-soft: rgba(239, 68, 68, 0.14);
+}
+
+html[data-accent='green'] {
+  --brand: #22c55e;
+  --brand-2: #16a34a;
+  --brand-soft: rgba(34, 197, 94, 0.14);
+}
+
+/* 深色背景下用浅灰做主色，不然黑按钮在深底上等于看不见 */
+html[data-theme='dark'][data-accent='black'] {
+  --brand: #e5e7eb;
+  --brand-2: #cbd5e1;
+  --brand-soft: rgba(229, 231, 235, 0.14);
+}
+
+html[data-theme='light'][data-accent='black'] {
+  --brand: #111827;
+  --brand-2: #374151;
+  --brand-soft: rgba(17, 24, 39, 0.1);
+}
+
+html[data-theme='dark'][data-accent='white'] {
+  --brand: #ffffff;
+  --brand-2: #e5e7eb;
+  --brand-soft: rgba(255, 255, 255, 0.16);
+}
+
+html[data-theme='light'][data-accent='white'] {
+  --brand: #9ca3af;
+  --brand-2: #6b7280;
+  --brand-soft: rgba(156, 163, 175, 0.16);
+}
+
+/* 白色主色时，按钮上的白字要改成深色才看得见 */
+html[data-accent='white'] .btn-primary {
+  color: #111827;
+}
+
+/* ==========================================================================
+   头像
+   ========================================================================== */
+
+.avatar-trigger {
+  position: relative;
+  display: inline-block;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  border-radius: 50%;
+  line-height: 0;
+}
+
+.avatar-trigger:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.avatar-trigger:hover .avatar-badge {
+  opacity: 1;
+}
+
+.avatar-badge {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--text);
+  color: var(--bg);
+  font-size: 11px;
+  line-height: 1.6;
+  font-weight: 550;
+  opacity: 0.85;
+  transition: opacity 0.16s ease;
+}
+
+.brand-avatar {
+  display: inline-flex;
+  border-radius: 50%;
+  transition: transform 0.16s ease;
+}
+
+.brand-avatar:hover {
+  transform: scale(1.06);
+}
+
+/* ==========================================================================
+   可点击的整行卡片
+   ========================================================================== */
+
+.row-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--text);
+  transition: background 0.16s ease, border-color 0.16s ease;
+}
+
+.row-btn:hover {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+}
+
+.chevron {
+  font-size: 22px;
+  line-height: 1;
+  color: var(--muted);
+}
+
+/* ==========================================================================
+   底部上滑面板
+   ========================================================================== */
+
+.sheet-root {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  pointer-events: none;
+}
+
+.sheet-root.is-open {
+  pointer-events: auto;
+}
+
+.sheet-mask {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  padding: 0;
+  background: rgba(0, 0, 0, 0.55);
+  opacity: 0;
+  transition: opacity 0.28s ease;
+}
+
+.sheet-root.is-open .sheet-mask {
+  opacity: 1;
+}
+
+.sheet-panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  /* 占屏幕 4/5 高 */
+  height: 80vh;
+  max-height: 80dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-soft);
+  border-radius: 22px 22px 0 0;
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -24px 60px rgba(0, 0, 0, 0.45);
+  transform: translateY(100%);
+  transition: transform 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.sheet-root.is-open .sheet-panel {
+  transform: translateY(0);
+}
+
+.sheet-handle {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 4px;
+  margin: 10px auto 6px;
+  border-radius: 999px;
+  background: var(--border-strong);
+}
+
+.sheet-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 12px 22px 28px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.sheet-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.sheet-actions .btn {
+  flex: 1;
+}
+
+/* ==========================================================================
+   主题色圆点
+   ========================================================================== */
+
+.accent-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 0 4px;
+}
+
+.accent-dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  position: relative;
+  /* 白色圆点在浅色背景上也要能看见边界 */
+  box-shadow: inset 0 0 0 1px rgba(127, 127, 127, 0.35);
+  transition: transform 0.16s ease, border-color 0.16s ease;
+}
+
+.accent-dot:hover {
+  transform: scale(1.1);
+}
+
+.accent-dot.is-active {
+  border-color: var(--text);
+  transform: scale(1.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet-panel {
+    transition: none;
+  }
+}
+
+/* ==========================================================================
+   举报：低调的文字按钮 + 居中弹窗
+   ========================================================================== */
+
+.link-quiet {
+  border: 0;
+  padding: 2px 4px;
+  background: none;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: color 0.16s ease, background 0.16s ease;
+}
+
+.link-quiet:hover {
+  color: var(--text);
+  background: var(--surface-2);
+}
+
+.dialog-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 220;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.6);
+  animation: dialogFade 0.18s ease;
+}
+
+.dialog-card {
+  width: 100%;
+  max-width: 420px;
+  max-height: 86vh;
+  overflow-y: auto;
+  padding: 22px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--bg-soft);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+  animation: dialogPop 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes dialogFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes dialogPop {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+.radio-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: background 0.14s ease;
+}
+
+.radio-row:hover {
+  background: var(--surface-2);
+}
+
+.radio-row input {
+  accent-color: var(--brand);
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialog-mask,
+  .dialog-card {
+    animation: none;
+  }
+}

@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
+import ReportButton from '@/components/report-button';
 import { translateError } from '@/lib/errors';
 import { initialOf, timeAgo } from '@/lib/format';
 import { createClient } from '@/lib/supabase/client';
@@ -186,17 +187,31 @@ export default function CommentSection({
                   </p>
                 </div>
 
-                {canDelete && (
-                  <button
-                    type="button"
-                    className="btn btn-danger btn-sm"
-                    style={{ alignSelf: 'flex-start' }}
-                    onClick={() => handleDelete(comment.id)}
-                    disabled={deletingId === comment.id}
-                  >
-                    {deletingId === comment.id ? '…' : '删除'}
-                  </button>
-                )}
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-end',
+                    gap: 6,
+                  }}
+                >
+                  <ReportButton
+                    targetType="comment"
+                    targetId={comment.id}
+                    loggedIn={Boolean(currentUserId)}
+                  />
+
+                  {canDelete && (
+                    <button
+                      type="button"
+                      className="btn btn-danger btn-sm"
+                      onClick={() => handleDelete(comment.id)}
+                      disabled={deletingId === comment.id}
+                    >
+                      {deletingId === comment.id ? '…' : '删除'}
+                    </button>
+                  )}
+                </div>
               </li>
             );
           })}

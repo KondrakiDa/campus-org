@@ -2,17 +2,27 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 import CommentSection from '@/components/comment-section';
+import Pagination from '@/components/pagination';
 import PostActions from '@/components/post-actions';
+import ReportButton from '@/components/report-button';
 import { initialOf, timeAgo } from '@/lib/format';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
 import { createClient, getProfile } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
 
-export default async function OrgPage({ params }) {
+const PAGE_SIZE = 10;
+
+export default async function OrgPage({ params, searchParams }) {
   if (!isSupabaseConfigured) notFound();
 
   const { id } = await params;
+  const { page: pageParam } = await searchParams;
+
+  // 页码永远从 1 开始，非法值一律当成 1
+  const currentPage = Math.max(1, Number.parseInt(pageParam, 10) || 1);
+  const rangeFrom = (currentPage - 1) * PAGE_SIZE;
+  const rangeTo = rangeFrom + PAGE_SIZE - 1;
 
   // 简单校验，避免把乱七八糟的字符串塞进查询
   const uuidPattern =
@@ -21,35 +31,53 @@ export default async function OrgPage({ params }) {
 
   const supabase = await createClient();
 
-  const { data: org } = await supabase
-    .from('orgs')
-    .select('id, name, school, intro, logo_url, created_at')
-    .eq('id', id)
-    .single();
+  // 五个查询全部同时发出。
+  // 以前是「先查组织 → 再查用户 → 再并行查三张表」，
+  // 串行两轮就要多等 500ms。现在合成一轮，只等最慢的那个。
+  const [orgResult, profile, postsResult, commentsResult, membersResult] =
+    await Promise.all([
+      supabase
+        .from('orgs')
+        .select('id, name, school, intro, logo_url, created_at')
+        .eq('id', id)
+        .single(),
 
+      getProfile().catch(() => null),
+
+      supabase
+        .from('posts')
+        // count: 'exact' 会额外返回总条数，用来算总页数
+        .select('id, title, body, images, created_at, profiles(display_name)', {
+          count: 'exact',
+        })
+        .eq('org_id', id)
+        .order('created_at', { ascending: false })
+        // range 是「含头含尾」的区间，只取当前页那 10 条
+        .range(rangeFrom, rangeTo),
+
+      supabase
+        .from('comments')
+        .select('id, body, created_at, author_id, profiles(display_name)')
+        .eq('org_id', id)
+        .is('post_id', null)
+        .order('created_at', { ascending: false })
+        .limit(200),
+
+      supabase
+        .from('org_members')
+        .select('user_id, role, profiles(display_name)')
+        .eq('org_id', id),
+    ]);
+
+  const org = orgResult.data;
   if (!org) notFound();
 
-  const profile = await getProfile().catch(() => null);
+  const { data: comments } = commentsResult;
+  const { data: members } = membersResult;
 
-  const [{ data: posts }, { data: comments }, { data: members }] = await Promise.all([
-    supabase
-      .from('posts')
-      .select('id, title, body, images, created_at, profiles(display_name)')
-      .eq('org_id', id)
-      .order('created_at', { ascending: false })
-      .limit(50),
-    supabase
-      .from('comments')
-      .select('id, body, created_at, author_id, profiles(display_name)')
-      .eq('org_id', id)
-      .is('post_id', null)
-      .order('created_at', { ascending: false })
-      .limit(200),
-    supabase
-      .from('org_members')
-      .select('user_id, role, profiles(display_name)')
-      .eq('org_id', id),
-  ]);
+  const posts = postsResult.data;
+  const postTotal = postsResult.count ?? 0;
+  const totalPages = Math.max(1, Math.ceil(postTotal / PAGE_SIZE));
 
   const isMember = Boolean(
     profile && members?.some((m) => m.user_id === profile.id)
@@ -204,12 +232,45 @@ export default async function OrgPage({ params }) {
                     由 {post.profiles?.display_name || '管理员'} 发布
                   </span>
 
-                  {isMember && <PostActions postId={post.id} />}
+                  <div className="row" style={{ gap: 6 }}>
+                    <ReportButton
+                      targetType="post"
+                      targetId={post.id}
+                      loggedIn={Boolean(profile)}
+                    />
+                    {isMember && <PostActions postId={post.id} />}
+                  </div>
                 </div>
               </article>
             ))}
           </div>
         )}
+
+        {currentPage > 1 && (!posts || posts.length === 0) && (
+          <div className="empty-state">
+            这一页没有内容了。
+            {totalPages > 1 && (
+              <>
+                {' '}
+                <Link
+                  href={`/org/${org.id}${totalPages > 1 ? `?page=${totalPages}` : ''}`}
+                  style={{ color: 'var(--brand)' }}
+                >
+                  跳到最后一页 →
+                </Link>
+              </>
+            )}
+          </div>
+        )}
+
+        <Pagination
+          page={currentPage}
+          totalPages={totalPages}
+          label="动态分页"
+          hrefForPage={(target) =>
+            `/org/${org.id}${target === 1 ? '' : `?page=${target}`}`
+          }
+        />
       </section>
 
       {/* ============ 评论区 ============ */}
