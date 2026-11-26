@@ -1,7 +1,7 @@
 name: 构建安卓 APK
 
 # 什么时候自动构建：
-#   1. 推送到 static-export 或 main 分支，且改动涉及代码
+#   1. 推送到 static-export 或 main 分支
 #   2. 在 GitHub 网页上手动点「Run workflow」
 on:
   push:
@@ -16,25 +16,34 @@ jobs:
       - name: 拉取代码
         uses: actions/checkout@v4
 
+      # 必须是 Node 22+：@capacitor/cli 8.x 的 engines 要求 >=22，
+      # 用 Node 20 时 CLI 一启动就因版本不满足直接退出（exit code 1，0 秒失败）
       - name: 安装 Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: 安装依赖
         run: npm ci
 
-      # 这两个变量本来就是公开信息（会出现在 APK 里），
-      # 直接写在这里比配 Secrets 省事。要换成 Secrets 就改这两行。
+      # 这两个变量本来就是公开信息（会出现在 APK 里）
       - name: 构建静态站点
         run: npm run build
         env:
           NEXT_PUBLIC_SUPABASE_URL: https://mihnozlyzuzwlkgzhufq.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: sb_publishable_zOODZIhjr8bPWZ_58M_DkQ_hBeEjOCy
 
+      - name: 检查环境（失败时帮助排查）
+        run: |
+          node -v
+          echo "--- capacitor cli ---"
+          npx --no-install cap --version || echo "cap 无法执行"
+          echo "--- out 目录 ---"
+          ls out | head -5
+
       - name: 同步到安卓工程
-        run: npx cap sync android
+        run: npx --no-install cap sync android
 
       - name: 安装 JDK 21
         uses: actions/setup-java@v4
